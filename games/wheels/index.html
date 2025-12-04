@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>عجلة ڤلّه</title>
+  <link rel="icon" type="image/png" href="/image/logo2.png">
+  <link rel="stylesheet" href="../../styles.css" />
+  <script src="../../ether.js" defer></script>
+
+  <style>
+  /* إزالة أزرار زيادة/نقص الأرقام من كل المتصفحات */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+
+  .log-zone {
+    scrollbar-width: thin;
+    scrollbar-color: #2ad3d8 rgba(255,255,255,0.08);
+  }
+
+/* Chrome, Edge, Safari */
+  .log-zone::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .log-zone::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+  }
+
+  .log-zone::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #2ad3d8, #15d0d4);
+    border-radius: 10px;
+    border: 2px solid rgba(0,0,0,0.4);
+    box-shadow: 0 0 6px rgba(42,211,216,0.5);
+  }
+
+  .log-zone::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #32e0e6, #19e4e9);
+    box-shadow: 0 0 10px rgba(42,211,216,0.8);
+  }
+
+    .game-area{ padding:30px; }
+    .game-box{
+      width:100%; max-width:1100px; height:620px; margin:0 auto;
+      background: rgba(0,0,0,0.45); border-radius:24px;
+      backdrop-filter: blur(6px); position:relative; overflow:hidden;
+      border:1px solid rgba(255,255,255,0.08);
+      display:grid; grid-template-columns: 1fr 280px; gap:14px; padding:14px;
+    }
+
+    .wheel-zone{
+      position:relative; display:flex; align-items:center; justify-content:center;
+      border-radius:18px;
+    }
+    #wheelCanvas{
+      width:520px; height:520px; max-width:90vw; max-height:90vw;
+      cursor: pointer;
+      display:block;
+    }
+    /* السهم (نفس موقعه، فقط اتجاهه) */
+    .pointer{
+      position:absolute; top:50%; left:50%;
+      transform: translate(240px, -50%);
+      width:0; height:0;
+      border-top:14px solid transparent;
+      border-bottom:14px solid transparent;
+      border-right:26px solid rgba(216, 245, 223, 0.95);
+      filter: drop-shadow(0 0 6px rgba(255,255,255,.6));
+    }
+
+    .wheel-controls{
+      position:absolute; bottom:10px; left:0; right:0;
+      display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+    }
+    .btnx{
+      padding:10px 16px; border-radius:12px; cursor:pointer;
+      background: rgba(255,255,255,0.12);
+      border:1px solid rgba(255,255,255,0.2);
+      color:#fff; font-weight:800;
+      transition: .15s;
+    }
+    .btnx:hover{ transform:scale(1.04); }
+
+    .log-zone{
+      background: rgba(0,0,0,0.35);
+      border-radius:14px; padding:10px; color:#fff; font-size:.95rem;
+      overflow:auto; border:1px solid rgba(255,255,255,0.06);
+    }
+    .log-title{ font-weight:900; margin-bottom:6px; }
+    .log-item{ padding:6px 8px; border-bottom:1px dashed rgba(255,255,255,0.08); }
+
+    .overlay{
+      position:absolute; inset:0; z-index:20;
+      background: rgba(0,0,0,0.6);
+      display:none; align-items:center; justify-content:center; padding:20px;
+    }
+    .overlay-card{
+      width:min(900px, 95vw);
+      background: rgba(20,20,30,0.92);
+      border-radius:18px; padding:18px; color:#fff;
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .winner-banner{
+      font-size:1.5rem; font-weight:900; text-align:center; margin-bottom:12px;
+    }
+    .players-grid{
+      display:grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+      gap:10px;
+    }
+    .player-tile{
+      background: rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:12px; padding:8px; text-align:center; cursor:pointer;
+      transition:.2s;
+    }
+    .player-tile:hover{ transform:scale(1.05); box-shadow:0 0 12px rgba(42,211,216,.35); }
+    .player-avatar{
+      width:60px; height:60px; border-radius:50%; object-fit:cover; margin-bottom:6px;
+      background:#222;
+    }
+
+    .settings-panel{
+      position:absolute; top:12px; left:12px; z-index:15;
+      display:none;
+      background: rgba(0,0,0,0.7);
+      padding:12px; border-radius:12px; color:#fff; width:220px;
+      border:1px solid rgba(255,255,255,0.12);
+    }
+    .settings-panel label{ font-size:.9rem; }
+    .settings-panel input{
+      width:100%; margin-top:4px; margin-bottom:8px; padding:6px;
+      border-radius:8px; border:1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08); color:#fff;
+    }
+
+    .join-hint{
+      position:absolute; top:18px; right:18px; left:18px;
+      margin:auto; max-width:720px;
+      background: rgba(0,0,0,0.55);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:14px;
+      padding:10px 14px;
+      color:#fff; font-weight:800; text-align:center;
+      z-index:12; backdrop-filter: blur(6px);
+    }
+
+    /* Fireworks */
+    #fireworksCanvas{
+      position:fixed; inset:0;
+      z-index:9998; pointer-events:none; display:none;
+    }
+    .final-banner{
+      position:fixed; inset:0;
+      z-index:9999; display:none; align-items:center; justify-content:center;
+      background: rgba(0,0,0,0.45);
+    }
+    .final-card{
+      background: rgba(10,10,18,0.9);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:18px; color:#fff;
+      padding:20px 24px; text-align:center;
+      width:min(520px, 92vw); backdrop-filter: blur(6px);
+    }
+    .final-card h3{ margin:0 0 8px; font-size:1.8rem; }
+    .final-card p{ margin:0 0 14px; opacity:.95; }
+
+    @media (max-width: 900px){
+      .game-box{ grid-template-columns: 1fr; height:auto; }
+      .log-zone{ max-height:220px; }
+    }
+
+    /* Manual modal input */
+    #manualModal input {
+      background: rgba(255,255,255,0.12);
+      color:#fff;
+      border:1px solid rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- الخلفية -->
+  <canvas id="ether-bg" aria-hidden="true"></canvas>
+
+  <!-- الهيدر -->
+<div class="top-bar">
+  <div class="back-btn" onclick="window.location.href='../../games.html'">رجوع</div>
+
+  <!-- ✅ صندوق حساب تويتش -->
+  <div class="twitch-user-box" id="twitchUserBox">
+    <img id="twitchAvatar" src="">
+    <span id="twitchUsername">غير مسجّل</span>
+  </div>
+
+  <h2 class="site-title">عجلة ڤله</h2>
+</div>
+
+  <!-- محتوى اللعبة -->
+  <div class="game-area">
+    <div class="game-box">
+
+      <!-- العجلة -->
+      <div class="wheel-zone">
+        <canvas id="wheelCanvas" width="520" height="520" title="اضغط على العجلة للّف"></canvas>
+        <div class="pointer"></div>
+
+        <div class="join-hint" id="joinHint">
+          ✍️ اكتب <span style="color:#2ad3d8">V9!</span> في الشات عشان تدخل اللعبة
+        </div>
+
+        <div class="wheel-controls">
+          <button class="btnx" id="startToggleBtn">بدء</button>
+          <button class="btnx" id="editBtn">تعديل</button>
+          <button class="btnx" id="manualAddBtn">+ إضافة يدوية</button>
+          <button class="btnx" id="resetBtn">إعادة</button>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+          <label>سرعة العجلة (ثواني اللف)</label>
+          <input id="spinDur" type="number" min="2" max="15" step="0.5" value="6">
+          <label>عدد اللفات</label>
+          <input id="spinLaps" type="number" min="2" max="30" step="1" value="10">
+          <button class="btnx" id="saveSettings">حفظ</button>
+        </div>
+      </div>
+
+      <!-- اللوق -->
+      <div class="log-zone" id="logZone">
+        <div class="log-title">الأحداث</div>
+      </div>
+
+      <!-- Overlay الطرد -->
+      <div class="overlay" id="kickOverlay">
+        <div class="overlay-card">
+          <div class="winner-banner" id="winnerBanner"></div>
+          <div style="text-align:center;opacity:.9;margin-bottom:10px">
+            اختر شخص لطرده من العجلة
+          </div>
+          <div class="players-grid" id="playersGrid"></div>
+          <div style="text-align:center;margin-top:12px">
+            <button class="btnx" id="cancelKick">إلغاء</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- نهاية اللعبة -->
+  <canvas id="fireworksCanvas"></canvas>
+  <div class="final-banner" id="finalBanner">
+    <div class="final-card">
+      <h3>🎆 انتهت اللعبة!</h3>
+      <p id="finalText"></p>
+      <button class="btnx" id="restartBtn">إعادة اللعبة</button>
+    </div>
+  </div>
+
+  <!-- Manual Add Modal -->
+  <div id="manualModal" class="overlay" style="display:none; z-index:9999;">
+    <div class="overlay-card" style="max-width:400px; text-align:center;">
+      <h3 style="margin-bottom:10px;">إضافة لاعب يدويًا</h3>
+      <input id="manualName" type="text" placeholder="اكتب اسم اللاعب"
+             style="width:100%; padding:10px; border-radius:10px; border:none; margin-bottom:12px;">
+      <button class="btnx" id="manualAddConfirm">إضافة</button>
+      <button class="btnx" style="margin-top:8px;" id="manualAddCancel">إلغاء</button>
+    </div>
+  </div>
+
+<script src="tmi.min.js"></script>
+<script>
+  console.log("tmi READY:", typeof tmi);
+</script>
+
+<script>
+const BOT_USERNAME = "vallabot";
+const BOT_TOKEN = "yhhyqlfr878a0r2zve9lcensv4v13c";
+const CHANNEL = localStorage.getItem("twitch_username");
+const TWITCH_CLIENT_ID = "t0u3q65s187lx1y839yudlutyvkurc"; // ✅ حط Client ID هنا
+const twitchToken = localStorage.getItem("twitch_access_token");
+const twitchUser  = localStorage.getItem("twitch_username");
+
+
+/* ========= Twitch Chat Connection ========= */
+
+if(!twitchToken || !twitchUser){
+  console.warn("⚠️ ما فيه تسجيل دخول تويتش — الشات لن يعمل");
+}else{
+
+  const client = new tmi.Client({
+    connection: { secure: true, reconnect: true },
+    identity: {
+      username: BOT_USERNAME,
+      password: BOT_TOKEN
+    },
+    channels: [ CHANNEL ]
+  });
+
+
+  client.connect();
+
+  client.on("connected", () => {
+    console.log("✅ تم الاتصال بشات تويتش بنجاح");
+    log("✅ تم ربط اللعبة مع شات تويتش");
+  });
+
+  client.on("message", async (channel, tags, message, self) => {
+    if (self) return;
+
+    const text = message.trim().toLowerCase();
+    const username = tags.username.toLowerCase();
+
+    // ✅ أمر الدخول !v9
+    if(text === "!v9"){
+
+      if(!registrationsOpen){
+        log(`🚫 @${username} حاول الدخول والتسجيل مقفل`);
+        return;
+      }
+
+      if(joinedSet.has(username)){
+        log(`⚠️ @${username} موجود بالفعل`);
+        return;
+      }
+
+      const avatar =
+        (await fetchAvatar(username)) ||
+        `https://placehold.co/80x80?text=${username[0]?.toUpperCase() || "?"}`;
+
+      players.push({ name: username, avatar });
+      joinedSet.add(username);
+
+      log(`✅ @${username} دخل من الشات`);
+      drawWheel();
+    }
+
+    // ✅ الطرد من الشات (وقت اختيار الفائز)
+    if(awaitingKick && currentWinner === tags.username.toLowerCase()){
+      if(message.startsWith("@")){
+        const target = message.replace("@","").toLowerCase();
+        const index = players.findIndex(p => p.name === target);
+
+        if(index !== -1){
+          kickOverlay.style.display="none";
+          kickPlayer(index, players[winnerIndex]);
+        }
+      }
+    }
+  });
+
+}
+</script>
+
+  <!-- Twitch lib -->
+
+  <script>
+  /* ========= Twitch Config ========= */
+
+  /* ========= DOM ========= */
+  const canvas = document.getElementById("wheelCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const editBtn = document.getElementById("editBtn");
+  const manualAddBtn = document.getElementById("manualAddBtn");
+  const startToggleBtn = document.getElementById("startToggleBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const joinHint = document.getElementById("joinHint");
+
+  const logZone = document.getElementById("logZone");
+  const kickOverlay = document.getElementById("kickOverlay");
+  const playersGrid = document.getElementById("playersGrid");
+  const winnerBanner = document.getElementById("winnerBanner");
+  const cancelKick = document.getElementById("cancelKick");
+
+  const settingsPanel = document.getElementById("settingsPanel");
+  const spinDurInput = document.getElementById("spinDur");
+  const spinLapsInput = document.getElementById("spinLaps");
+  const saveSettings = document.getElementById("saveSettings");
+
+  const fireworksCanvas = document.getElementById("fireworksCanvas");
+  const fctx = fireworksCanvas.getContext("2d");
+  const finalBanner = document.getElementById("finalBanner");
+  const finalText = document.getElementById("finalText");
+  const restartBtn = document.getElementById("restartBtn");
+
+  const manualModal = document.getElementById("manualModal");
+  const manualName = document.getElementById("manualName");
+  const manualAddConfirm = document.getElementById("manualAddConfirm");
+  const manualAddCancel = document.getElementById("manualAddCancel");
+
+  /* ========= State ========= */
+  let players = [];
+  let joinedSet = new Set();
+
+  let spinDuration = 6;
+  let spinLaps = 10;
+
+  let angle = 0;
+  let spinning = false;
+  let winnerIndex = -1;
+
+  let awaitingKick = false;
+  let currentWinner = null;
+
+  let registrationsOpen = true;
+  let idleSpinSpeed = 0.0022;
+
+  let channelLogoImg = null;
+
+  const themeColors = ["#164b42", "#0a0f0d", "#134230", "#13382e"];
+
+  /* ========= Helpers ========= */
+  function log(msg){
+    const item = document.createElement("div");
+    item.className = "log-item";
+    item.textContent = msg;
+    logZone.appendChild(item);
+    logZone.scrollTop = logZone.scrollHeight;
+  }
+  function easeOutCubic(t){ return 1 - Math.pow(1-t,3); }
+
+  /* ========= Draw Wheel ========= */
+  function drawWheel(){
+    const {width:w, height:h} = canvas;
+    ctx.clearRect(0,0,w,h);
+
+    const cx = w/2, cy = h/2;
+    const radius = w/2 - 10;
+
+    const n = players.length > 0 ? players.length : 8;
+    const slice = (Math.PI*2)/n;
+
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(angle);
+
+    for(let i=0;i<n;i++){
+      const start = i*slice;
+      const end = start + slice;
+
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.arc(0,0,radius,start,end);
+      ctx.closePath();
+      ctx.fillStyle = themeColors[i % themeColors.length];
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      if(players.length > 0){
+        ctx.save();
+        ctx.rotate(start + slice/2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 20px Cairo";
+        ctx.fillText(players[i]?.name || "—", radius-14, 8);
+        ctx.restore();
+      }
+    }
+
+    ctx.restore();
+
+    // مركز العجلة
+    ctx.beginPath();
+    ctx.arc(cx,cy,56,0,Math.PI*2);
+    ctx.fillStyle="rgba(0,0,0,0.85)";
+    ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,0.25)";
+    ctx.lineWidth=3;
+    ctx.stroke();
+
+    if(channelLogoImg){
+      const r = 48;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+      ctx.drawImage(channelLogoImg, cx-r, cy-r, r*2, r*2);
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.strokeStyle="rgba(255,255,255,0.35)";
+      ctx.lineWidth=2;
+      ctx.stroke();
+    } else if (twitchUser){
+      ctx.fillStyle="#fff";
+      ctx.font="bold 16px Cairo";
+      ctx.textAlign="center";
+      ctx.fillText(twitchUser.toUpperCase(), cx, cy+6);
+    }
+  }
+
+  function pickWinnerFromAngle(){
+    const n = players.length;
+    const slice = (Math.PI*2)/n;
+    let normalized = (Math.PI*2 - (angle % (Math.PI*2))) % (Math.PI*2);
+    return Math.floor(normalized / slice) % n;
+  }
+
+  /* ========= Idle Spin ========= */
+  function idleLoop(){
+    if(!spinning && registrationsOpen){
+      angle += idleSpinSpeed;
+    }
+    drawWheel();
+    requestAnimationFrame(idleLoop);
+  }
+
+  /* ========= Spin ========= */
+  function spin(){
+    if(spinning) return;
+
+    if(registrationsOpen){
+      log("⚠️ اقفل التسجيل بزر (بدء) أولاً.");
+      return;
+    }
+    if(players.length < 2){
+      log("⚠️ لازم على الأقل لاعبين اثنين.");
+      return;
+    }
+    if(awaitingKick){
+      log("⌛ انتظر الطرد الحالي أولاً.");
+      return;
+    }
+
+    spinning = true;
+    awaitingKick = false;
+    currentWinner = null;
+
+    const startAngle = angle;
+    const extra = spinLaps * Math.PI*2 + Math.random()*Math.PI*2;
+    const endAngle = startAngle + extra;
+
+    const startTime = performance.now();
+    const durationMs = spinDuration * 1000;
+
+    log("🌀 العجلة تدور لاختيار اسم...");
+
+    function animate(now){
+      const t = Math.min(1, (now-startTime)/durationMs);
+      const e = easeOutCubic(t);
+      angle = startAngle + (endAngle-startAngle)*e;
+      drawWheel();
+
+      if(t < 1){
+        requestAnimationFrame(animate);
+      } else {
+        spinning = false;
+
+        winnerIndex = pickWinnerFromAngle();
+        const winner = players[winnerIndex];
+
+        currentWinner = winner.name.toLowerCase();
+        awaitingKick = true;
+
+        log(`🎯 دور @${winner.name}`);
+        log(`⌛ @${winner.name} اكتب منشن في الشات لطرد شخص`);
+
+        showKickOverlay(winner);
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  /* ========= Kick Overlay ========= */
+  function showKickOverlay(winner){
+    winnerBanner.textContent = `الفائز: @${winner.name} — اختر شخص لطرده`;
+    playersGrid.innerHTML = "";
+
+    players.forEach((p, i) => {
+      if(i === winnerIndex) return;
+
+      const tile = document.createElement("div");
+      tile.className="player-tile";
+      tile.innerHTML = `
+        <img class="player-avatar" src="${p.avatar}" onerror="this.src='https://placehold.co/80x80?text=?'">
+        <div>@${p.name}</div>
+      `;
+
+      tile.onclick = () => {
+        kickOverlay.style.display="none";
+        kickPlayer(i, winner);
+      };
+
+      playersGrid.appendChild(tile);
+    });
+
+    kickOverlay.style.display="flex";
+  }
+
+  function kickPlayer(targetIndex, winner){
+    const kicked = players[targetIndex];
+    players.splice(targetIndex,1);
+    joinedSet.delete(kicked.name.toLowerCase());
+
+    log(`❌ @${winner.name} قام بطرد @${kicked.name}`);
+
+    if(targetIndex < winnerIndex) winnerIndex--;
+
+    awaitingKick = false;
+    currentWinner = null;
+
+    requestAnimationFrame(drawWheel);
+
+    if(players.length === 1){
+      const last = players[0];
+      log(`🏆 الفائز النهائي: @${last.name}`);
+      showFinalCelebration(last.name);
+    }
+  }
+
+  cancelKick.onclick = () => kickOverlay.style.display="none";
+
+  /* ========= Buttons ========= */
+  canvas.addEventListener("click", spin);
+
+  startToggleBtn.onclick = () => {
+    if(spinning){ log("⌛ انتظر انتهاء اللف."); return; }
+    if(awaitingKick){ log("⌛ انتظر الطرد الحالي."); return; }
+
+    registrationsOpen = !registrationsOpen;
+
+    if(registrationsOpen){
+      startToggleBtn.textContent = "بدء";
+      joinHint.style.display = "block";
+      log("🔓 تم فتح التسجيل من جديد.");
+    } else {
+      startToggleBtn.textContent = "فتح التسجيل";
+      joinHint.style.display = "none";
+      log("🚀 تم بدء الجولة! التسجيل مقفل الآن.");
+    }
+  };
+
+  resetBtn.onclick = resetGame;
+
+  editBtn.onclick = () => {
+    settingsPanel.style.display = settingsPanel.style.display==="block" ? "none" : "block";
+  };
+  saveSettings.onclick = () => {
+    spinDuration = Number(spinDurInput.value) || 6;
+    spinLaps = Number(spinLapsInput.value) || 10;
+    settingsPanel.style.display="none";
+    log(`⚙️ تم تعديل الإعدادات: سرعة=${spinDuration}s ، لفات=${spinLaps}`);
+  };
+
+  // فتح مودال الإضافة اليدوية
+  manualAddBtn.onclick = () => {
+    if (!registrationsOpen) { log("🚫 التسجيل مقفل."); return; }
+    manualModal.style.display = "flex";
+    manualName.focus();
+  };
+
+  // أزرار المودال
+  manualAddCancel.onclick = () => {
+    manualModal.style.display = "none";
+    manualName.value = "";
+  };
+
+  manualAddConfirm.onclick = async () => {
+    const nameRaw = manualName.value.trim();
+    if(!nameRaw) return;
+
+    const name = nameRaw.replace(/^@/, "").toLowerCase();
+    if(joinedSet.has(name)){
+      log(`⚠️ @${name} موجود مسبقاً.`);
+      manualModal.style.display = "none";
+      manualName.value = "";
+      return;
+    }
+
+    const avatar = await fetchAvatar(name)
+      || `https://placehold.co/80x80?text=${name[0]?.toUpperCase() || "?"}`;
+
+    players.push({ name, avatar });
+    joinedSet.add(name);
+    log(`✅ @${name} دخل العجلة (يدوي)`);
+
+    manualModal.style.display = "none";
+    manualName.value = "";
+    drawWheel();
+  };
+
+  /* ========= Reset Game ========= */
+  function resetGame(){
+    players = [];
+    joinedSet.clear();
+    angle = 0;
+    spinning = false;
+    winnerIndex = -1;
+    awaitingKick = false;
+    currentWinner = null;
+    registrationsOpen = true;
+    startToggleBtn.textContent = "بدء";
+    joinHint.style.display = "block";
+    finalBanner.style.display="none";
+    stopFireworks();
+    log("🔁 تم إعادة اللعبة.");
+  }
+
+  restartBtn.onclick = resetGame;
+
+  /* ========= Twitch helpers ========= */
+  async function fetchAvatar(login){
+    try{
+      if(!TWITCH_CLIENT_ID || TWITCH_CLIENT_ID.includes("PUT_")) return null;
+
+      const res = await fetch(`https://api.twitch.tv/helix/users?login=${login}`, {
+        headers: {
+          "Client-ID": TWITCH_CLIENT_ID,
+          "Authorization": `Bearer ${twitchToken}`
+        }
+      });
+      const json = await res.json();
+      return json.data?.[0]?.profile_image_url || null;
+    }catch{
+      return null;
+    }
+  }
+
+  async function loadChannelLogo(){
+    const url = await fetchAvatar(twitchUser.toLowerCase());
+    if(!url) return;
+
+    channelLogoImg = new Image();
+    channelLogoImg.crossOrigin = "anonymous";
+    channelLogoImg.onload = () => drawWheel();
+    channelLogoImg.src = url;
+  }
+  loadChannelLogo();
+
+  /* ========= Fireworks ========= */
+  function resizeFireworks(){
+    fireworksCanvas.width = window.innerWidth;
+    fireworksCanvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resizeFireworks);
+  resizeFireworks();
+
+  let fwParticles = [];
+  let fwRunning = false;
+  let fwTimer = null;
+
+  function spawnFirework(){
+    const w = fireworksCanvas.width, h = fireworksCanvas.height;
+    const x = Math.random()*w*0.9 + w*0.05;
+    const y = Math.random()*h*0.35 + h*0.05;
+
+    const colors = ["#2ad3d8","#15D0D4","#a84fb5","#7a2fb0","#ffffff"];
+    const color = colors[Math.floor(Math.random()*colors.length)];
+
+    const count = 60;
+    for(let i=0;i<count;i++){
+      const ang = (Math.PI*2*i)/count;
+      const spd = Math.random()*3 + 2;
+      fwParticles.push({
+        x,y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd,
+        life: Math.random()*40 + 40, color
+      });
+    }
+  }
+
+  function fireworksLoop(){
+    if(!fwRunning) return;
+    const w = fireworksCanvas.width, h = fireworksCanvas.height;
+    fctx.clearRect(0,0,w,h);
+
+    fwParticles.forEach(p=>{
+      p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life--;
+      fctx.globalAlpha = Math.max(0, p.life/80);
+      fctx.beginPath(); fctx.arc(p.x,p.y,2.2,0,Math.PI*2);
+      fctx.fillStyle = p.color; fctx.fill();
+    });
+
+    fwParticles = fwParticles.filter(p=>p.life>0);
+    requestAnimationFrame(fireworksLoop);
+  }
+
+  function startFireworks(durationMs=6500){
+    fwParticles = []; fwRunning = true;
+    fireworksCanvas.style.display="block";
+    spawnFirework();
+    fwTimer = setInterval(spawnFirework, 650);
+    fireworksLoop();
+    setTimeout(stopFireworks, durationMs);
+  }
+
+  function stopFireworks(){
+    fwRunning = false; fireworksCanvas.style.display="none";
+    if(fwTimer) clearInterval(fwTimer);
+    fwTimer = null;
+  }
+
+  function showFinalCelebration(winnerName){
+    startFireworks();
+    finalText.textContent = `🎆 الفائز النهائي هو: @${winnerName} 🎆`;
+    finalBanner.style.display="flex";
+  }
+
+  /* ========= Boot ========= */
+  window.addEventListener("load", () => {
+    drawWheel();
+    idleLoop();
+    log("✍️ اكتب V9! في الشات للدخول للعجلة.");
+    log("🟣 عند ضغط على زر (بدء) يقفل التسجيل واللعبة تبدأ.");
+  });
+</script>
+  
+<script>
+
+const userName   = document.getElementById("twitchUsername");
+const userAvatar = document.getElementById("twitchAvatar");
+
+async function loadTwitchUser(){
+  if(!twitchToken || !twitchUser){
+    userName.textContent = "غير مسجّل";
+    userAvatar.src = "https://placehold.co/32x32?text=?";
+    return;
+  }
+
+  try{
+    const res = await fetch(`https://api.twitch.tv/helix/users?login=${twitchUser}`, {
+      headers:{
+        "Client-ID": TWITCH_CLIENT_ID,
+        "Authorization": `Bearer ${twitchToken}`
+      }
+    });
+
+    const data = await res.json();
+    if(data.data?.length){
+      userName.textContent = data.data[0].display_name;
+      userAvatar.src = data.data[0].profile_image_url;
+    }
+  }catch{
+    userName.textContent = twitchUser;
+    userAvatar.src = "https://placehold.co/32x32?text=?";
+  }
+}
+
+loadTwitchUser();
+</script>
+
+</body>
+
+</body>
+<footer class="foot"> 2O25 ViRUS, All Rights Reserved © </footer>
+
+</html>
