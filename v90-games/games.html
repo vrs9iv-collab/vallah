@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title> ڤله</title>
+<link rel="icon" type="image/png" href="/image/logo2.png">
+<link rel="stylesheet" href="../styles.css" />
+<script src="../ether.js" defer></script>
+<style>
+  body{
+    margin:0;
+    color:#fff;
+    font-family:"Cairo", sans-serif;
+  }
+
+  .page-area{ padding:22px; max-width:1200px; margin:auto; }
+
+  .section-title{
+    font-size:1.4rem; font-weight:900; margin:18px 0 10px;
+  }
+
+  .game-card{
+    background: rgba(0,0,0,0.50);
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,0.12);
+    padding:0;
+    cursor:pointer;
+    transition:0.25s;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .game-card:hover{
+    transform:scale(1.04);
+    backdrop-filter: blur(6px);
+    transform:scale(1.04); }
+
+  .game-thumb{
+    width:100%;
+    height:170px;
+    object-fit:cover;
+    background:#222;
+    transition:0.25s;
+  }
+
+  .game-info{ flex:1; }
+  .game-info h3{ margin:0 0 6px; font-size:1.1rem; }
+  .game-info p{ margin:0; opacity:.85; font-size:.9rem; }
+#gamesList {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 3 بطاقات بالسطر */
+  grid-template-rows: repeat(4, auto);   /* 4 صفوف */
+  gap: 18px;
+}
+  .card-img-wrapper{
+    position:relative;
+    width:100%;
+    height:170px;
+    overflow:hidden;
+  }
+  .hover-desc{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.65);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:12px;
+    opacity:0;
+    transition:0.25s;
+    font-size:.9rem;
+  }
+  .card-img-wrapper:hover .hover-desc{ opacity:1; }
+.hover-full{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.78);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    text-align:center;
+    opacity:0;
+    transition:0.25s;
+    font-size:.95rem;
+    z-index:10;
+    backdrop-filter: blur(4px);
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.78);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    text-align:center;
+    opacity:0;
+    transition:0.25s;
+    font-size:.95rem;
+    z-index:10;
+  }
+  .game-card:hover .hover-full{ opacity:1; }
+
+  /* grid for all sections */
+  #lastPlayed, #newestGame, #mostPlayed{
+    display:inline-block;
+    width:32%;
+    vertical-align:top;
+    margin-bottom:20px;
+  }
+
+  /* Special badge styles */
+  .badge-new{
+    position:absolute;top:8px;right:8px;
+    background:#ff3b3b;
+    padding:4px 8px;
+    border-radius:8px;
+    font-size:.75rem;font-weight:900;
+    z-index:20;
+  }
+  .badge-hot{
+    position:absolute;top:8px;right:8px;
+    background:#ff8c22;
+    padding:4px 8px;
+    border-radius:8px;
+    font-size:.75rem;font-weight:900;
+    z-index:20;
+  }
+.stats-row{
+    display:flex;
+    gap:18px;
+    margin-bottom:25px;
+  }
+  .stats-col{
+    flex:1;
+    min-width:0;
+  }
+</style>
+</head>
+
+<body>
+
+<canvas id="ether-bg" aria-hidden="true"></canvas>
+
+<div class="top-bar">
+  <div class="back-btn" onclick="window.location.href='../index.html'">رجوع</div>
+
+  <!-- ✅ صندوق حساب تويتش -->
+  <div class="twitch-user-box" id="twitchUserBox">
+    <img id="twitchAvatar" src="">
+    <span id="twitchUsername">غير مسجّل</span>
+  </div>
+
+  <h2 class="site-title">الألعاب</h2>
+</div>
+
+<div class="page-area">
+
+  <div class="stats-row">
+  <div class="stats-col">
+    <div class="section-title">📂 جميع الألعاب</div>
+  <div id="gamesList"></div>
+
+</div>
+
+<script>
+/* =============== بيانات الألعاب (من داخل الصفحة) =============== */
+const games = [
+  {
+    title:"عجلة ڤـله",
+    desc:"عجلة شخصنة كلاسيكية ، مع كل لفة من العجلة يتم اختيار اسم شخص عشوائي من اجل ان يطرد شخص اخر من العجلة ، اخر من يبقى يفوز",
+    thumb:"image/logo2.png",
+    url:"games/wheels/index.html",
+    added:20250128
+  },
+  {
+    title:"السرعة بدون بديهة",
+    desc:"لعبة يحتاج السرعة و التركيز ، تجيك مطر من ايموجيات عشوائية لازم تعد عدد الايموجيات و تعرف عدد الايموجي المطلوب",
+    thumb:"image/logo.png",
+    url:"games/rain/index.html",
+    added:20250129
+  },
+  {
+    title:"طاولة الصملة",
+    desc:"اللعبة مزيج بين عجلة الشخصنة و روليت الروسي ، البقاء لصاحب افضل الحظ",
+    thumb:"image/logo2.png",
+    url:"games/roulette/index.html",
+    added:20250120
+  },
+  {
+    title:"حرب الدول",
+    desc:"عجلة الحظ ولكن الطرد تكون عشوائي لان كل لاعب مختفي خلف دولة معينة",
+    thumb:"image/logo.png",
+    url:"games/country/index.html",
+    added:20250121
+  },
+  {
+    title:"الفسحة",
+    desc:"الفسحة مكان الهواشات والحين وقت تحزب الشعب كل واحد يختار شعبته و يدخل بحرب ضد شعبة المنافسة",
+    thumb:"image/logo2.png",
+    url:"games/war/index.html",
+    added:20250122
+  }
+];
+
+/* =============== بناء عنصر اللعبة =============== */
+function gameCard(g){
+  const div = document.createElement("div");
+  div.className = "game-card";
+  div.onclick = ()=>{
+    localStorage.setItem("lastPlayed", g.title);
+    const c = Number(localStorage.getItem("playCount_"+g.title) || 0);
+    localStorage.setItem("playCount_"+g.title, c+1);
+    window.location.href = g.url;
+  };
+  div.innerHTML = `
+    <img class=\"game-thumb\" src=\"${g.thumb}\" onerror=\"this.src='fallback.jpg'\">
+    <div class='hover-full'>${g.desc}</div>
+    <h3 style='margin:10px 0 6px;font-size:1.1rem;position:relative;z-index:5;'>${g.title}</h3>
+  `;
+  return div;
+}
+
+/* =============== عرض كل الألعاب =============== */
+function renderAllGames(){
+  const box = document.getElementById("gamesList");
+  box.innerHTML = "";
+  games.forEach(g=> box.appendChild(gameCard(g)));
+}
+
+/* =============== آخر لعبة لعبتها =============== */
+function renderLastPlayed(){
+  const last = localStorage.getItem("lastPlayed");
+  const box = document.getElementById("lastPlayed");
+  box.innerHTML = last ? "" : `<div class='muted'>ما لعبت أي لعبة بعد</div>`;
+  if(!last) return;
+  const g = games.find(x=>x.title===last);
+  if(g) box.appendChild(gameCard(g));
+}
+
+/* =============== أحدث لعبة =============== */
+function renderNewest(){
+  const box = document.getElementById("newestGame");
+  const g = [...games].sort((a,b)=>b.added - a.added)[0];
+  box.appendChild(gameCard(g));
+}
+
+/* =============== أكثر لعبة لعبتها =============== */
+function renderMostPlayed(){
+  let max = 0;
+  let best = null;
+  games.forEach(g=>{
+    const c = Number(localStorage.getItem("playCount_"+g.title) || 0);
+    if(c > max){ max = c; best = g; }
+  });
+
+  const box = document.getElementById("mostPlayed");
+  if(!best || max===0){
+    box.innerHTML = `<div class='muted'>ما لعبت كفاية لنعرض لك إحصاءات</div>`;
+    return;
+  }
+  box.appendChild(gameCard(best));
+}
+
+/* =============== تشغيل الصفحة =============== */
+renderAllGames();
+ 
+ 
+ 
+
+</script>
+<script>
+const BOT_USERNAME = "vallabot";
+const BOT_TOKEN = "yhhyqlfr878a0r2zve9lcensv4v13c";
+const CHANNEL = localStorage.getItem("twitch_username");
+const TWITCH_CLIENT_ID = "t0u3q65s187lx1y839yudlutyvkurc"; // ✅ حط Client ID هنا
+const twitchToken = localStorage.getItem("twitch_access_token");
+const twitchUser  = localStorage.getItem("twitch_username");
+
+const userName   = document.getElementById("twitchUsername");
+const userAvatar = document.getElementById("twitchAvatar");
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+  const userName   = document.getElementById("twitchUsername");
+  const userAvatar = document.getElementById("twitchAvatar");
+
+  const twitchToken = localStorage.getItem("twitch_access_token");
+  const twitchUser  = localStorage.getItem("twitch_username");
+
+  const TWITCH_CLIENT_ID = "t0u3q65s187lx1y839yudlutyvkurc"; // ID حقك
+
+  console.log("🟣 User:", twitchUser);
+  console.log("🟣 Token:", twitchToken);
+
+  if(!twitchToken || !twitchUser){
+    userName.textContent = "غير مسجّل";
+    userAvatar.src = "https://placehold.co/32x32?text=?";
+    return;
+  }
+
+  try{
+    const res = await fetch(`https://api.twitch.tv/helix/users?login=${twitchUser}`, {
+      headers:{
+        "Client-ID": TWITCH_CLIENT_ID,
+        "Authorization": `Bearer ${twitchToken}`
+      }
+    });
+
+    const data = await res.json();
+    console.log("✅ Twitch Data:", data);
+
+    if(data.data && data.data.length){
+      userName.textContent = data.data[0].display_name;
+      userAvatar.src = data.data[0].profile_image_url;
+    }else{
+      userName.textContent = twitchUser;
+      userAvatar.src = "https://placehold.co/32x32?text=?";
+    }
+
+  }catch(err){
+    console.error("❌ Twitch Error:", err);
+    userName.textContent = twitchUser;
+    userAvatar.src = "https://placehold.co/32x32?text=?";
+  }
+
+});
+</script>
+
+</body>
+
+</html>

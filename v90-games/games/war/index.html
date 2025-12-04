@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title> ڤله</title>
+
+<link rel="icon" type="image/png" href="/image/logo2.png">
+<link rel="stylesheet" href="../../styles.css" />
+<script src="../../ether.js" defer></script>
+
+<style>
+  body{
+    margin:0;
+    color:#fff;
+    font-family:"Cairo",system-ui,sans-serif;
+    overflow-x:hidden;
+  }
+
+  #ether-bg{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    z-index:-1;
+  }
+
+  /* صندوق اللوق للفريقين */
+#team0Log,
+#team1Log {
+  max-height: 260px;          /* ارتفاع ثابت ما يتمطط أكثر من كذا */
+  overflow-y: auto;           /* سكروول عمودي */
+  padding-right: 6px;
+  scrollbar-width: thin;      /* Firefox */
+  scrollbar-color: #2ad3d8 rgba(255,255,255,0.08);
+}
+
+/* Chrome / Edge / Safari */
+#team0Log::-webkit-scrollbar,
+#team1Log::-webkit-scrollbar {
+  width: 8px;
+}
+
+#team0Log::-webkit-scrollbar-track,
+#team1Log::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+}
+
+#team0Log::-webkit-scrollbar-thumb,
+#team1Log::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2ad3d8, #15d0d4);
+  border-radius: 10px;
+  border: 2px solid rgba(0,0,0,0.4);
+  box-shadow: 0 0 6px rgba(42,211,216,0.5);
+}
+
+#team0Log::-webkit-scrollbar-thumb:hover,
+#team1Log::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #32e0e6, #19e4e9);
+  box-shadow: 0 0 10px rgba(42,211,216,0.8);
+}
+
+
+  .site-title{font-weight:900;}
+
+  .game-area{ padding:30px; }
+  .game-box{
+    width:100%; max-width:1200px; height:650px; margin:0 auto;
+    background: rgba(0,0,0,0.45); border-radius:24px;
+    backdrop-filter: blur(6px); position:relative; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.08);
+    display:grid; grid-template-columns: 260px 1fr 260px; gap:14px; padding:14px;
+  }
+
+  /* ===== Panels (Teams) ===== */
+  .team-panel {
+    display: flex;
+    flex-direction: column;
+    height: 560px;         /* نفس ارتفاع لوحة المربعات تقريباً */
+  }
+  
+  .team-header{
+    display:flex; align-items:center; justify-content:space-between;
+    font-weight:900; font-size:1rem;
+  }
+  .team-name{
+    display:flex; align-items:center; gap:6px;
+  }
+  .team-dot{
+    width:10px; height:10px; border-radius:50%;
+  }
+  .team-score{
+    font-weight:900; font-size:1.2rem;
+  }
+  .team-score span{
+    font-size:.9rem; opacity:.8; margin-right:4px;
+  }
+
+  .players-box{
+    background: rgba(255,255,255,0.03);
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.08);
+    padding:6px;
+    flex:0 0 auto;
+    max-height:140px;
+    overflow:auto;
+    font-size:.9rem;
+  }
+  .player-item{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:2px 4px;
+  }
+  .player-item span{
+    opacity:.9;
+  }
+  .turn-badge{
+    font-size:.75rem;
+    padding:2px 6px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.4);
+  }
+
+  .add-player-row{
+    display:flex; gap:4px; margin-top:4px;
+  }
+  .add-player-row input{
+    flex:1;
+    padding:6px 8px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.35);
+    color:#fff;
+    font-size:.8rem;
+  }
+  .small-btn{
+    padding:6px 10px;
+    border-radius:10px;
+    background: rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.25);
+    color:#fff;
+    font-size:.8rem;
+    cursor:pointer;
+  }
+
+  .team-log{
+    margin-top:4px;
+    flex:1;
+    border-radius:10px;
+    padding:6px;
+    font-size:.8rem;
+    overflow:auto;
+  }
+
+  /* تلوين اللوقات عشان تبان أكثر */
+  #team0Log{
+    background: rgba(58,166,255,0.10);
+    border:1px solid rgba(58,166,255,0.45);
+  }
+  #team1Log{
+    background: rgba(255,75,92,0.10);
+    border:1px solid rgba(255,75,92,0.45);
+  }
+
+  .team-log-entry{
+    padding:2px 0;
+    border-bottom:1px dashed rgba(255,255,255,0.06);
+  }
+
+  /* ===== Center Area ===== */
+  .center-area{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .top-info{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:.9rem;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .turn-indicator{
+    padding:4px 10px;
+    border-radius:999px;
+    background: rgba(0,0,0,0.5);
+    border:1px solid rgba(255,255,255,0.2);
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .turn-indicator-dot{
+    width:10px; height:10px; border-radius:50%;
+  }
+  .center-buttons{
+    display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;
+  }
+  .btnx{
+    padding:8px 14px; border-radius:12px; cursor:pointer;
+    background: rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.2);
+    color:#fff; font-weight:800; transition:.15s;
+    font-size:.85rem;
+  }
+  .btnx:hover{ transform:scale(1.04); }
+
+  .hp-input{
+    display:flex; align-items:center; gap:4px;
+    background: rgba(0,0,0,0.5);
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.25);
+    padding:3px 6px;
+  }
+  .hp-input input{
+    width:70px;
+    background:transparent;
+    border:none;
+    color:#fff;
+    text-align:center;
+    font-size:.8rem;
+    outline:none;
+  }
+
+  /* ===== Board 10x10 ===== */
+  .board-wrapper{
+    flex:1;
+    background: rgba(0,0,0,0.5);
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,0.08);
+    padding:8px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .board-grid{
+    flex:1;
+    display:grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-auto-rows: 1fr;
+    gap:4px;
+  }
+
+  .board-cell{
+    position:relative;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.12);
+    background: radial-gradient(circle at top, rgba(255,255,255,0.12), rgba(0,0,0,0.9));
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:4px;
+    transition:.12s;
+  }
+  .board-cell:hover{
+    transform:translateY(-1px) scale(1.02);
+    box-shadow:0 0 10px rgba(42,211,216,0.45);
+    border-color: rgba(62, 216, 42, 0.7);
+  }
+  .board-cell.used{
+    opacity:.3;
+    box-shadow:none;
+  }
+
+  .cell-symbol{
+    font-size:1.4rem;
+    line-height:1.1;
+  }
+
+  .cell-symbol img.emoji{
+    width: 28px;
+    height: 28px;
+    vertical-align: middle;
+  }
+
+  .cell-result{
+    font-size:.75rem;
+    opacity:.9;
+    margin-top:2px;
+  }
+
+  .small-hint{
+    font-size:.78rem;
+    opacity:.78;
+    text-align:center;
+  }
+
+  /* Fireworks */
+  #fireworksCanvas{
+    position:fixed; inset:0; z-index:9998;
+    pointer-events:none; display:none;
+  }
+  .final-banner{
+    position:fixed; inset:0; z-index:9999;
+    display:none; align-items:center; justify-content:center;
+    background: rgba(0,0,0,0.45);
+  }
+  .final-card{
+    background: rgba(10,10,18,0.9);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:18px; color:#fff; padding:20px 24px; text-align:center;
+    width:min(520px, 92vw); backdrop-filter: blur(6px);
+  }
+
+  @media (max-width: 1000px){
+    .game-box{
+      grid-template-columns: 1fr;
+      height:auto;
+    }
+  }
+</style>
+</head>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" defer></script>
+
+<body>
+<canvas id="ether-bg" aria-hidden="true"></canvas>
+
+<div class="top-bar">
+  <div class="back-btn" onclick="window.location.href='../../games.html'">رجوع</div>
+
+  <!-- ✅ صندوق حساب تويتش -->
+  <div class="twitch-user-box" id="twitchUserBox">
+    <img id="twitchAvatar" src="">
+    <span id="twitchUsername">غير مسجّل</span>
+  </div>
+
+  <h2 class="site-title">الفسحة</h2>
+</div>
+
+<div class="game-area">
+  <div class="game-box">
+
+    <!-- الفريق الأزرق (يسار) -->
+    <div class="team-panel" id="team0Panel">
+      <div class="team-header">
+        <div class="team-name">
+          <div class="team-dot" style="background:#3aa6ff;"></div>
+          <span id="team0Name">الفريق الأزرق</span>
+        </div>
+        <div class="team-score" id="team0ScoreBox">
+          <span>HP</span><b id="team0Score">200</b>
+        </div>
+      </div>
+
+      <div class="players-box" id="team0Players"></div>
+
+      <div class="add-player-row">
+        <input type="text" id="team0Input" placeholder="اسم لاعب للفريق الأزرق">
+        <button class="small-btn" data-team="0" id="team0AddBtn">إضافة</button>
+      </div>
+
+      <div class="team-log" id="team0Log"></div>
+    </div>
+
+    <!-- الوسط -->
+    <div class="center-area">
+      <div class="top-info">
+        <div class="turn-indicator" id="turnIndicator">
+          <div class="turn-indicator-dot" id="turnDot" style="background:#3aa6ff;"></div>
+          <span id="turnText">دور: الفريق الأزرق</span>
+        </div>
+
+        <div class="center-buttons">
+          <div class="hp-input">
+            <span style="font-size:.75rem;opacity:.8;">بداية من</span>
+            <input type="number" id="hpInput" min="10" max="1000" value="200">
+            <span style="font-size:.75rem;opacity:.8;">نقطة</span>
+            <button class="small-btn" id="hpApplyBtn">تعيين</button>
+          </div>
+          <button class="btnx" id="resetBtn">إعادة اللعبة بالكامل</button>
+        </div>
+      </div>
+
+      <div class="board-wrapper">
+        <div class="board-grid" id="boardGrid"></div>
+        <div class="small-hint">
+          اضغط على أي مربع من الشبكة ⚔️🛡❄️
+        </div>
+      </div>
+    </div>
+
+    <!-- الفريق الأحمر (يمين) -->
+    <div class="team-panel" id="team1Panel">
+      <div class="team-header">
+        <div class="team-name">
+          <div class="team-dot" style="background:#ff4b5c;"></div>
+          <span id="team1Name">الفريق الأحمر</span>
+        </div>
+        <div class="team-score" id="team1ScoreBox">
+          <span>HP</span><b id="team1Score">200</b>
+        </div>
+      </div>
+
+      <div class="players-box" id="team1Players"></div>
+
+      <div class="add-player-row">
+        <input type="text" id="team1Input" placeholder="اسم لاعب للفريق الأحمر">
+        <button class="small-btn" data-team="1" id="team1AddBtn">إضافة</button>
+      </div>
+
+      <div class="team-log" id="team1Log"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Fireworks -->
+<canvas id="fireworksCanvas"></canvas>
+<div class="final-banner" id="finalBanner">
+  <div class="final-card">
+    <h3>🎆 انتهت اللعبة!</h3>
+    <p id="finalText"></p>
+    <button class="btnx" id="restartBtn">إعادة اللعب بنفس الفرق</button>
+  </div>
+</div>
+
+<script>
+/* =========================
+   War Teams – Vallah Style
+========================= */
+
+/* ===== نقاط البداية (قابلة للتعديل) ===== */
+let baseHP = 200;
+
+/* ===== DOM ===== */
+const boardGrid = document.getElementById("boardGrid");
+
+const team0ScoreEl = document.getElementById("team0Score");
+const team1ScoreEl = document.getElementById("team1Score");
+const team0PlayersEl = document.getElementById("team0Players");
+const team1PlayersEl = document.getElementById("team1Players");
+const team0LogEl = document.getElementById("team0Log");
+const team1LogEl = document.getElementById("team1Log");
+
+const team0Input = document.getElementById("team0Input");
+const team1Input = document.getElementById("team1Input");
+const team0AddBtn = document.getElementById("team0AddBtn");
+const team1AddBtn = document.getElementById("team1AddBtn");
+
+const turnDot = document.getElementById("turnDot");
+const turnText = document.getElementById("turnText");
+
+const resetBtn = document.getElementById("resetBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+const hpInput = document.getElementById("hpInput");
+const hpApplyBtn = document.getElementById("hpApplyBtn");
+
+const fireworksCanvas = document.getElementById("fireworksCanvas");
+const fctx = fireworksCanvas.getContext("2d");
+const finalBanner = document.getElementById("finalBanner");
+const finalText = document.getElementById("finalText");
+
+
+/* ===== State ===== */
+const teams = [
+  {
+    name: "الفريق الأزرق",
+    color: "#3aa6ff",
+    hp: baseHP,
+    players: [],
+    turnIndex: 0,
+    shield: false,
+    frozen: false,
+    weakEnemy: false,
+  },
+  {
+    name: "الفريق الأحمر",
+    color: "#ff4b5c",
+    hp: baseHP,
+    players: [],
+    turnIndex: 0,
+    shield: false,
+    frozen: false,
+    weakEnemy: false,
+  },
+];
+
+let currentTeam = 0; // 0 = أزرق (يسار), 1 = أحمر (يمين)
+let gameOver = false;
+
+
+/* ===== Symbols for rows ===== */
+/* 1) أرقام من 1 إلى 20 — سطرين */
+const numberSymbols = [
+  "1","2","3","4","5","6","7","8","9","10",
+  "11","12","13","14","15","16","17","18","19","20"
+];
+
+/* 2) أعلام ثابتة */
+const flagSymbols = [
+  "🇸🇦","🇮🇶","🇰🇼","🇶🇦","🇧🇭","🇴🇲","🇦🇪","🇯🇴","🇱🇧","🇪🇬",
+  "🇲🇦","🇩🇿","🇹🇳","🇱🇾","🇸🇾","🇾🇪","🇹🇷","🇺🇸","🇬🇧","🇫🇷"
+];
+
+/* 3) أشكال ثابتة */
+const miscSymbols = ["⭐","⚡","🔥","💣","💀","🎁","💎","🌵","🪻","🌴","💚","🍿","🍕","🍰","🥥","🍉","🍍","🍒","🍓","🥑"];
+
+/* 4) أحرف أبجدية ثابتة */
+const letterSymbols = ["أ","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف"];
+
+/* 5) حيوانات ثابتة */
+const animalSymbols = ["🐺","🦊","🐻","🦁","🐯","🦅","🐍","🐗","🐱","🐶","🐼","🐴","🐰","🦉","🐲","🦈","🦌","🐷","🐸","🐵"];
+
+
+/* ===== تأثيرات اللعبة ===== */
+/* ✅ التحكم في عدد مرات تبديل النقاط */
+let swapUsed = false;
+
+/* ✅ التأثيرات الأساسية */
+const BASE_EFFECTS = [
+  // ضرر الخصم
+  {type:"dmgEnemy", value:5, label:"5"},
+  {type:"dmgEnemy", value:10, label:"10"},
+  {type:"dmgEnemy", value:15, label:"15"},
+  {type:"dmgEnemy", value:20, label:"20"},
+  {type:"dmgEnemy", value:25, label:"25"},
+
+  // ضرر النفس (نفس ضرر الخصم)
+  {type:"dmgSelf",  value:5, label:"-5"},
+  {type:"dmgSelf",  value:10, label:"-10"},
+  {type:"dmgSelf",  value:15, label:"-15"},
+  {type:"dmgSelf",  value:20, label:"-20"},
+  {type:"dmgSelf",  value:25, label:"-25"},
+
+  // هيل 15 فقط
+  {type:"healSelf", value:15, label:"+5", chance: 0.05},
+  {type:"healSelf", value:15, label:"+15", chance: 0.03},
+  {type:"healSelf", value:15, label:"+25", chance: 0.01},
+
+  // لا شيء
+  {type:"nothing", value:0, label:"0"}
+];
+
+/* ✅ التأثيرات النادرة باحتمالات */
+const RARE_EFFECTS = [
+  {type:"shieldSelf", value:0, label:"🛡", chance: 0.05}, // 10%
+  {type:"freezeEnemy", value:0, label:"❄", chance: 0.02}, // 5%
+  {type:"weakenEnemy", value:0, label:"x0.5", chance: 0.02} // 8%
+];
+
+/* ✅ التأثيرات القوية (نسبة قليلة جدًا) */
+const EXTREME_EFFECTS = [
+  {type:"dmgEnemy", value:42, label:"42", chance: 0.02}, // 3%
+  {type:"dmgEnemy", value:50, label:"50", chance: 0.015}, // 1.5%
+  {type:"dmgEnemy", value:1, label:"1", chance: 0.08}, // 3%
+
+  {type:"dmgSelf", value:40, label:"-40", chance: 0.02}, // 2%
+  {type:"dmgSelf", value:5, label:"-5", chance: 0.14}, // 2%
+
+  {type:"healSelf", value:50, label:"+50", chance: 0.02} // 2%
+];
+
+/* ✅ التبديل (مرة واحدة فقط) */
+const SWAP_EFFECT = {type:"swap", value:0, label:"↔", chance: 0.04}; // 4%
+
+/* ✅ دالة اختيار عشوائي ذكية */
+function randEffect(){
+
+  // ✅ أول شيء: نحاول نطلع تأثير قوي نادر جدًا
+  for(const eff of EXTREME_EFFECTS){
+    if(Math.random() < eff.chance){
+      return eff;
+    }
+  }
+
+  // ✅ بعدها نحاول التأثيرات النادرة (حماية - تجميد - إضعاف)
+  for(const eff of RARE_EFFECTS){
+    if(Math.random() < eff.chance){
+      return eff;
+    }
+  }
+
+  // ✅ التبديل (مرة واحدة فقط)
+  if(!swapUsed && Math.random() < SWAP_EFFECT.chance){
+    swapUsed = true;
+    return SWAP_EFFECT;
+  }
+
+  // ✅ غير ذلك يرجع تأثير عادي
+  return BASE_EFFECTS[Math.floor(Math.random() * BASE_EFFECTS.length)];
+}
+
+
+/* ===== اللوح 10×10 ثابت الترتيب ===== */
+
+function createBoard(){
+  boardGrid.innerHTML = "";
+
+  for(let row=0; row<10; row++){
+    for(let col=0; col<10; col++){
+
+      const cell = document.createElement("div");
+      cell.className = "board-cell";
+      cell.dataset.used = "0";
+
+      const symbolSpan = document.createElement("div");
+      symbolSpan.className = "cell-symbol";
+
+      const resultSpan = document.createElement("div");
+      resultSpan.className = "cell-result";
+
+      let symbol = "";
+
+      if(row <= 1){
+        symbol = numberSymbols[row*10 + col];       // أرقام ثابتة من 1–20
+      }else if(row <= 3){
+        symbol = flagSymbols[(row-2)*10 + col];     // أعلام ثابتة
+      }else if(row <= 5){
+        symbol = miscSymbols[(row-4)*10 + col];      // رموز ثابتة
+      }else if(row <= 7){
+        symbol = letterSymbols[(row-6)*10 + col];    // أحرف ثابتة
+      }else{
+        symbol = animalSymbols[(row-8)*10 + col];    // حيوانات ثابتة
+      }
+
+      /* 🔥 تخزين الرمز الأصلي */
+
+      symbolSpan.textContent = symbol;
+
+      cell.dataset.baseSymbol = symbol;
+
+      cell.appendChild(symbolSpan);
+      cell.appendChild(resultSpan);
+
+      cell.addEventListener("click", ()=> onCellClick(cell, symbolSpan, resultSpan));
+
+      boardGrid.appendChild(cell);
+
+      if (window.twemoji) {
+        twemoji.parse(boardGrid, {
+        folder: "svg",
+        ext: ".svg"
+      });
+    }
+    }
+  }
+}
+/* =========================
+   2) منطق الضغط وتطبيق التأثيرات
+========================= */
+
+/* ===== تسجيل في اللوق ===== */
+function addTeamLog(teamIndex, text){
+  const logEl = teamIndex === 0 ? team0LogEl : team1LogEl;
+  const div = document.createElement("div");
+  div.className = "team-log-entry";
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+/* ===== عرض اللاعبين ===== */
+function renderPlayers(){
+  team0PlayersEl.innerHTML = "";
+  teams[0].players.forEach((name,i)=>{
+    const div = document.createElement("div");
+    div.className = "player-item";
+    div.innerHTML = `
+      <span>@${name}</span>
+      <span class="turn-badge" style="opacity:${
+        (currentTeam===0 && i===teams[0].turnIndex%Math.max(teams[0].players.length,1))?1:0.4
+      }">
+        ${(currentTeam===0 && i===teams[0].turnIndex%Math.max(teams[0].players.length,1)) ? "الدور" : ""}
+      </span>
+    `;
+    team0PlayersEl.appendChild(div);
+  });
+
+  team1PlayersEl.innerHTML = "";
+  teams[1].players.forEach((name,i)=>{
+    const div = document.createElement("div");
+    div.className = "player-item";
+    div.innerHTML = `
+      <span>@${name}</span>
+      <span class="turn-badge" style="opacity:${
+        (currentTeam===1 && i===teams[1].turnIndex%Math.max(teams[1].players.length,1))?1:0.4
+      }">
+        ${(currentTeam===1 && i===teams[1].turnIndex%Math.max(teams[1].players.length,1)) ? "الدور" : ""}
+      </span>
+    `;
+    team1PlayersEl.appendChild(div);
+  });
+}
+
+/* ===== تحديث نقاط الفريق ===== */
+function updateScores(){
+  team0ScoreEl.textContent = teams[0].hp;
+  team1ScoreEl.textContent = teams[1].hp;
+
+  if(teams[0].hp <= 0 || teams[1].hp <= 0){
+    endGame();
+  }
+}
+
+/* ===== تحديث مؤشر الدور ===== */
+function updateTurnIndicator(){
+  turnDot.style.background = teams[currentTeam].color;
+  turnText.textContent = `دور: ${teams[currentTeam].name}`;
+  renderPlayers();
+}
+
+/* =========================
+   الضغط على المربع
+========================= */
+
+function onCellClick(cell, symbolSpan){
+  if(gameOver) return;
+  if(cell.dataset.used === "1") return; // مستخدم من قبل
+
+  const team = teams[currentTeam];
+
+  if(team.players.length === 0){
+    addTeamLog(currentTeam, "سجّل لاعبين قبل ما تختار 👀");
+    return;
+  }
+
+  // الفريق مجمد؟ تخطي
+  if(team.frozen){
+    addTeamLog(currentTeam, "دورك مجمّد ❄ — يتم تخطي هذا الدور");
+    team.frozen = false;
+    nextTeamTurn();
+    return;
+  }
+
+  const playerName = team.players[ team.turnIndex % team.players.length ];
+  const effect = randEffect();
+
+  // تطبيق التأثير وعرض النتيجة بدل الرمز
+  applyEffect(effect, currentTeam, playerName, symbolSpan);
+
+  // تعليم الخلية أنها مستخدمة
+  cell.dataset.used = "1";
+  cell.classList.add("used");
+
+  teams[currentTeam].turnIndex++;
+
+  if(gameOver) return;
+
+  nextTeamTurn();
+}
+
+
+/* =========================
+   تطبيق التأثير
+========================= */
+
+function applyEffect(effect, actingTeamIndex, playerName, symbolSpan){
+  const team = teams[actingTeamIndex];
+  const otherIndex = actingTeamIndex === 0 ? 1 : 0;
+  const enemy = teams[otherIndex];
+
+  let label = effect.label;
+  let logSelf = "";
+  let logEnemy = "";
+
+  switch(effect.type){
+
+    /* --- ضرر للخصم --- */
+case "dmgEnemy":{
+  let dmg = effect.value;
+  if(team.weakEnemy){
+    dmg = Math.floor(dmg * 0.5);
+    team.weakEnemy = false;
+  }
+
+  if(enemy.shield){
+    enemy.shield = false;
+    label = `${dmg}`;
+    logSelf = `@${playerName} حاول يضرب الخصم لكن عنده حماية 🛡`;
+    logEnemy = `حمايتك صدّت الضربة من @${playerName} 🛡`;
+  }else{
+    enemy.hp = Math.max(0, enemy.hp - dmg);
+
+    // ✅ هنا التعديل المهم
+    label = `${dmg}`;   // بدون سالب
+    logSelf = `@${playerName} سبب ${dmg} ضرر للخصم`;
+    logEnemy = `استقبلت ${dmg} ضرر من @${playerName}`;
+  }
+  break;
+}
+
+    /* --- ضرر للنفس --- */
+    case "dmgSelf":{
+      const dmg = effect.value;
+      team.hp = Math.max(0, team.hp - dmg);
+      label = `-${dmg}`;
+      logSelf  = `@${playerName} خسر ${dmg}- على نفسه 💥`;
+      logEnemy = `الخصم خسر ${dmg}- لوحده 💀`;
+      break;
+    }
+
+    /* --- زيادة نقاط --- */
+    case "healSelf":{
+      const heal = effect.value;
+      team.hp += heal;
+      label = `💚`;
+      logSelf  = `@${playerName} رجّع ${heal}+ لفريقه ❤️`;
+      logEnemy = `الخصم زاد له ${heal}+ نقاط ❤️`;
+      break;
+    }
+
+    /* --- حماية --- */
+    case "shieldSelf":{
+      team.shield = true;
+      label = "🛡";
+      logSelf  = `@${playerName} فعّل حماية لفريقه 🛡`;
+      logEnemy = `الخصم فعّل حماية 🛡`;
+      break;
+    }
+
+    /* --- تجميد --- */
+    case "freezeEnemy":{
+      enemy.frozen = true;
+      label = "❄";
+      logSelf  = `@${playerName} جمّد دور الخصم القادم ❄`;
+      logEnemy = `دورك القادم مجمّد ❄`;
+      break;
+    }
+
+    /* --- إضعاف --- */
+    case "weakenEnemy":{
+      enemy.weakEnemy = true;
+      label = "🧪";
+      logSelf  = `@${playerName} ضعّف هجوم الخصم القادم x0.5`;
+      logEnemy = `هجومك القادم ضعيف x0.5`;
+      break;
+    }
+
+    /* --- تبديل النقاط --- */
+    case "swap":{
+      const thp = team.hp;
+      team.hp = enemy.hp;
+      enemy.hp = thp;
+
+      label = "↔";
+      logSelf  = `@${playerName} بدّل نقاط الفريقين ↔`;
+      logEnemy = `تم تبديل النقاط بين الفريقين ↔`;
+      break;
+    }
+
+    /* --- لا شيء --- */
+    case "nothing":
+    default:{
+      label = "0";
+      logSelf  = `@${playerName} ما صار شيء 😅`;
+      logEnemy = `دور الخصم انتهى بدون تأثير 😅`;
+      break;
+    }
+  }
+
+  // عرض النتيجة مكان الرمز الأصلي
+  symbolSpan.textContent = label;
+
+  addTeamLog(actingTeamIndex, logSelf);
+  addTeamLog(otherIndex , logEnemy);
+
+  updateScores();
+}
+
+
+/* =========================
+   تغيير الدور
+========================= */
+
+function nextTeamTurn(){
+  currentTeam = currentTeam === 0 ? 1 : 0;
+  updateTurnIndicator();
+}
+/* =========================
+   3) إضافة لاعبين – ريسِت – نقاط – فوز – Boot
+========================= */
+
+/* ===== إضافة لاعب ===== */
+function addPlayerToTeam(teamIndex, nameRaw){
+  let name = (nameRaw || "").trim();
+  if(!name) return;
+
+  name = name.replace(/^@/, "");
+  teams[teamIndex].players.push(name);
+
+  addTeamLog(teamIndex, `تم إضافة @${name} إلى الفريق`);
+  renderPlayers();
+}
+
+/* ===== ريسِت جزئي ===== */
+function softReset(){
+  // رجّع HP
+  teams[0].hp = baseHP;
+  teams[1].hp = baseHP;
+
+  // شيل البفات
+  teams[0].shield = teams[1].shield = false;
+  teams[0].frozen = teams[1].frozen = false;
+  teams[0].weakEnemy = teams[1].weakEnemy = false;
+
+  // رجّع ترتيب الأدوار
+  teams[0].turnIndex = teams[1].turnIndex = 0;
+
+  // رجّع حالة اللعبة
+  currentTeam = 0;
+  gameOver = false;
+
+  // قفل شاشة النهاية ووقف الألعاب النارية
+  finalBanner.style.display = "none";
+  stopFireworks();
+
+  // 🔥 أهم سطر: إعادة بناء الشبكة من جديد
+  createBoard();
+
+  // تنظيف اللوق
+  team0LogEl.innerHTML = "";
+  team1LogEl.innerHTML = "";
+
+  // تحديث الواجهة
+  updateScores();
+  updateTurnIndicator();
+
+  addTeamLog(0,"لعبة جديدة بدأت 🔵");
+  addTeamLog(1,"لعبة جديدة بدأت 🔴");
+
+  swapUsed = false;
+
+}
+
+function fullReset(){
+  teams[0].players = [];
+  teams[1].players = [];
+
+  team0Input.value = "";
+  team1Input.value = "";
+
+  softReset();
+  renderPlayers();
+}
+
+/* ===== تغيير نقاط البداية ===== */
+hpApplyBtn.addEventListener("click", ()=>{
+  const v = parseInt(hpInput.value, 10);
+  if(isNaN(v) || v < 10 || v > 2000) return;
+
+  baseHP = v;
+
+  addTeamLog(0, `تم تعيين بداية اللعبة على ${baseHP} نقطة`);
+  addTeamLog(1, `تم تعيين بداية اللعبة على ${baseHP} نقطة`);
+
+  softReset();
+});
+
+/* =========================
+   الألعاب النارية
+========================= */
+
+function resizeFireworks(){
+  fireworksCanvas.width = innerWidth;
+  fireworksCanvas.height = innerHeight;
+}
+addEventListener("resize", resizeFireworks);
+resizeFireworks();
+
+let fwParticles = [];
+let fwRunning = false;
+let fwTimer = null;
+
+function spawnFirework(){
+  const w = fireworksCanvas.width;
+  const h = fireworksCanvas.height;
+
+  const x = Math.random()*w*0.9 + w*0.05;
+  const y = Math.random()*h*0.35 + h*0.05;
+
+  const colors = ["#2ad3d8","#15D0D4","#a84fb5","#7a2fb0","#ffffff"];
+  const color = colors[Math.floor(Math.random()*colors.length)];
+
+  for(let i=0;i<60;i++){
+    const ang = (Math.PI*2*i)/60;
+    const spd = Math.random()*3+2;
+    fwParticles.push({
+      x,y,
+      vx:Math.cos(ang)*spd,
+      vy:Math.sin(ang)*spd,
+      life:Math.random()*40+40,
+      color
+    });
+  }
+}
+
+function fireworksLoop(){
+  if(!fwRunning) return;
+
+  const w = fireworksCanvas.width;
+  const h = fireworksCanvas.height;
+
+  fctx.clearRect(0,0,w,h);
+
+  fwParticles.forEach(p=>{
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.03;
+    p.life--;
+
+    fctx.globalAlpha = Math.max(0, p.life/80);
+
+    fctx.beginPath();
+    fctx.arc(p.x, p.y, 2.2, 0, Math.PI*2);
+    fctx.fillStyle = p.color;
+    fctx.fill();
+  });
+
+  fwParticles = fwParticles.filter(p => p.life > 0);
+
+  requestAnimationFrame(fireworksLoop);
+}
+
+function startFireworks(durationMs=6500){
+  fwParticles = [];
+  fwRunning = true;
+
+  fireworksCanvas.style.display = "block";
+
+  spawnFirework();
+  fwTimer = setInterval(spawnFirework, 650);
+
+  fireworksLoop();
+
+  setTimeout(stopFireworks, durationMs);
+}
+
+function stopFireworks(){
+  fwRunning = false;
+  fireworksCanvas.style.display = "none";
+
+  if(fwTimer){
+    clearInterval(fwTimer);
+    fwTimer = null;
+  }
+}
+
+/* =========================
+   إنهاء اللعبة
+========================= */
+
+function endGame(){
+  if(gameOver) return;
+  gameOver = true;
+
+  const winner = teams[0].hp <= 0 ? 1 : 0;
+  const loser  = winner === 0 ? 1 : 0;
+
+  startFireworks();
+
+  finalText.textContent = `الفائز: ${teams[winner].name} — الخاسر: ${teams[loser].name}`;
+  finalBanner.style.display = "flex";
+}
+
+/* =========================
+   Events
+========================= */
+
+team0AddBtn.addEventListener("click", ()=>{
+  addPlayerToTeam(0, team0Input.value);
+  team0Input.value = "";
+});
+team1AddBtn.addEventListener("click", ()=>{
+  addPlayerToTeam(1, team1Input.value);
+  team1Input.value = "";
+});
+
+team0Input.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
+    addPlayerToTeam(0, team0Input.value);
+    team0Input.value = "";
+  }
+});
+team1Input.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
+    addPlayerToTeam(1, team1Input.value);
+    team1Input.value = "";
+  }
+});
+
+resetBtn.addEventListener("click", fullReset);
+restartBtn.addEventListener("click", softReset);
+
+/* =========================
+   Boot
+========================= */
+
+window.addEventListener("load", ()=>{
+  createBoard();
+  updateScores();
+  updateTurnIndicator();
+  renderPlayers();
+
+  addTeamLog(0, "سجّل لاعبين ثم ابدأ بالضغط على المربعات 🔵");
+  addTeamLog(1, "سجّل لاعبين ثم ابدأ بالضغط على المربعات 🔴");
+});
+
+</script>
+<script>
+const twitchToken = localStorage.getItem("twitch_access_token");
+const twitchUser  = localStorage.getItem("twitch_username");
+const TWITCH_CLIENT_ID = "PUT_YOUR_CLIENT_ID_HERE";
+
+const userName   = document.getElementById("twitchUsername");
+const userAvatar = document.getElementById("twitchAvatar");
+
+async function loadTwitchUser(){
+  if(!twitchToken || !twitchUser){
+    userName.textContent = "غير مسجّل";
+    userAvatar.src = "https://placehold.co/32x32?text=?";
+    return;
+  }
+
+  try{
+    const res = await fetch(`https://api.twitch.tv/helix/users?login=${twitchUser}`, {
+      headers:{
+        "Client-ID": TWITCH_CLIENT_ID,
+        "Authorization": `Bearer ${twitchToken}`
+      }
+    });
+
+    const data = await res.json();
+    if(data.data?.length){
+      userName.textContent = data.data[0].display_name;
+      userAvatar.src = data.data[0].profile_image_url;
+    }
+  }catch{
+    userName.textContent = twitchUser;
+    userAvatar.src = "https://placehold.co/32x32?text=?";
+  }
+}
+
+loadTwitchUser();
+</script>
+
+<footer class="foot"> 2O25 ViRUS, All Rights Reserved © </footer>
+</body>
+</html>

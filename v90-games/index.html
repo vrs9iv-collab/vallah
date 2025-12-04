@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title> ڤله</title>
+  <link rel="icon" type="image/png" href="image/logo2.png">
+
+  <!-- خط عربي -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    /* ====== التنبيه الأحمر ====== */
+    .alert-box-red {
+      position: fixed;
+      top: 20px;
+      left: 20px; /* يظهر في اليسار */
+      padding: 14px 22px;
+      background: rgba(255, 40, 40, 0.85);
+      border: 2px solid rgba(255, 0, 0, 1);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.05rem;
+      border-radius: 12px;
+      backdrop-filter: blur(5px);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(-15px);
+      transition: 0.25s ease;
+      box-shadow: 0 0 18px rgba(255, 0, 0, 0.6);
+      animation: flash 0.55s infinite alternate;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* زر داخل التنبيه */
+    .alert-red-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      transition: 0.2s ease;
+      font-weight: 600;
+    }
+    .alert-red-btn:hover {
+      background: rgba(255,255,255,0.35);
+    }
+
+    /* وميض الفلاش */
+    @keyframes flash {
+      from { box-shadow: 0 0 12px rgba(255,0,0,0.45); }
+      to   { box-shadow: 0 0 22px rgba(255,0,0,1); }
+    }
+
+    .alert-show { opacity: 1; transform: translateY(0); }
+  </style>
+
+</head>
+
+<body class="landing">
+
+  <!-- خلفية ether -->
+  <canvas id="ether-bg" aria-hidden="true"></canvas>
+
+  <!-- شريط علوي -->
+  <header class="nav">
+    <a class="brand" href="index.html">
+      <img src="2d5510158e18e0c483b008d8f4e71a7f.jpg" class="brand__logo" onerror="this.style.display='none'">
+      <span class="brand__name">ڤله</span>
+    </a>
+
+    <nav class="nav__actions">
+      <a id="loginLink" class="btn btn--ghost" href="login.html">تسجيل الدخول </a>
+      <button id="logoutBtn" class="btn btn--ghost" style="display:none">تسجيل الخروج</button>
+    </nav>
+  </header>
+
+  <!-- قسم ترحيبي -->
+  <main class="hero" role="main">
+
+  <!-- شعار كبير أعلى الصندوق -->
+    <div style="text-align:center; margin-bottom: 25px;">
+      <img src="image/logo.png"
+           alt="شعار V90"
+           class="logo-animated"
+           style="width: 350px; height: auto; border-radius: 12px">
+    </div>
+
+    <div class="hero__text">
+      <h1 class="hero__title">عالم ڤله - جهّز نفسك للمتعة</h1>
+      <p class="hero__sub">
+      هنا مو مجرد ألعاب…
+هنا مكان يجتمع فيه الڤله، الحماس، والضحك،
+وتبدأ فيه تحديات.
+
+ادخل عالم ڤله، جرب ڤلتنا،
+
+ اضغط وابدأ رحلتك الآن! 
+      </p>
+
+      <div class="hero__cta">
+        <button id="startGameBtn" class="btn btn--grad btn--lg">🎮 ابدأ اللعب</button>
+      </div>
+    </div>
+
+  </main>
+
+
+
+  <!-- 🔥 دالة التنبيه الأحمر -->
+  <script>
+    function showRedAlert(message, btnText, onClick) {
+      const alert = document.createElement("div");
+      alert.className = "alert-box-red";
+
+      const text = document.createElement("span");
+      text.textContent = message;
+
+      const btn = document.createElement("button");
+      btn.className = "alert-red-btn";
+      btn.textContent = btnText;
+      btn.onclick = () => {
+        onClick();
+        alert.remove();
+      };
+
+      alert.appendChild(text);
+      alert.appendChild(btn);
+      document.body.appendChild(alert);
+
+      setTimeout(() => alert.classList.add("alert-show"), 10);
+
+      // يختفي بعد 7 ثواني (اختياري)
+      setTimeout(() => {
+        alert.classList.remove("alert-show");
+        setTimeout(() => alert.remove(), 300);
+      }, 7000);
+    }
+  </script>
+
+  <!-- منطق تسجيل دخول Twitch -->
+  <script>
+    function isTwitchAuthed() {
+      return localStorage.getItem("twitch_access_token") &&
+             localStorage.getItem("twitch_username");
+    }
+
+    const startBtn  = document.getElementById("startGameBtn");
+    const loginLink = document.getElementById("loginLink");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    function refreshAuthUI() {
+      if (isTwitchAuthed()) {
+        loginLink.style.display = "none";
+        logoutBtn.style.display = "inline-flex";
+      } else {
+        loginLink.style.display = "inline-flex";
+        logoutBtn.style.display = "none";
+      }
+    }
+
+    refreshAuthUI();
+
+    startBtn.addEventListener("click", () => {
+      if (isTwitchAuthed()) {
+        window.location.href = "games.html";
+      } else {
+        showRedAlert(
+          "❗ يجب تسجيل الدخول أولًا",
+          "تسجيل الدخول",
+          () => window.location.href = "login.html"
+        );
+      }
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("twitch_access_token");
+      localStorage.removeItem("twitch_username");
+      localStorage.removeItem("twitch_user_id");
+      refreshAuthUI();
+      showRedAlert("✔ تم تسجيل الخروج", "تمام", () => {});
+    });
+  </script>
+
+  <!-- خلفية -->
+  <script src="ether.js"></script>
+
+</body>
+<footer class="foot"> 2O25 ViRUS, All Rights Reserved © </footer>
+
+</html>

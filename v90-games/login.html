@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title> تسجيل دخول</title>
+  <link rel="icon" type="image/png" href="image/logo2.png">
+
+  <!-- خط عربي -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+
+<style>
+  /* ===== الهيدر الثابت ===== */
+.top-bar{
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 70px;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+
+  z-index: 999999 !important;  /* ✅ أعلى من أي شيء */
+}
+
+/* زر الرجوع */
+.back-btn{
+  padding: 3px 21px;
+  background: rgba(255, 255, 255, 0.014);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* عنوان المنتصف */
+.site-title{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* إزاحة الصفحة تحت الهيدر */
+body{
+  padding-top: 80px !important;
+}
+
+body{
+  margin: 0;
+  color: #fff;
+  font-family: Cairo, sans-serif;
+  min-height: 100vh;
+  padding-top: 70px;   /* نفس ارتفاع الهيدر */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ✅ الخلفية المتحركة */
+#ether-bg{
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+/* ✅ صندوق تسجيل الدخول الزجاجي */
+.login-box{
+  max-width: 420px;
+  width: 100%;
+  padding: 26px 22px;
+
+  background: rgba(15,15,25,0.55);
+  border-radius: 22px;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.12);
+  animation: glassFade .6s ease;
+}
+
+@keyframes glassFade{
+  from{ opacity:0; transform: translateY(20px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
+.login-box h2{
+  margin-bottom: 14px;
+  font-weight: 900;
+  letter-spacing: .5px;
+}
+
+/* ✅ زر تويتش */
+.twitch-btn{
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #9146FF, #5f2dbd);
+  color: white;
+  font-weight: 900;
+  border: 0;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-top: 10px;
+  box-shadow: 0 0 18px rgba(145,70,255,0.6);
+  transition: .2s;
+}
+
+.twitch-btn:hover{
+  transform: scale(1.04);
+  box-shadow: 0 0 28px rgba(145,70,255,0.9);
+}
+
+.small{
+  color: #ccc;
+  margin-top: 14px;
+  font-size: .95rem;
+  opacity: .85;
+}
+</style>
+</head>
+  <!-- خلفية ether -->
+<canvas id="ether-bg" aria-hidden="true"></canvas>
+<div class="top-bar">
+  <div class="back-btn" onclick="window.location.href='index.html'">رجوع</div>
+</div>
+
+<body>
+
+  <!-- ✅ نفس خلفية الصفحات الثانية -->
+  <canvas id="ether-bg"></canvas>
+
+  <div class="login-box">
+    <h2>تسجيل الدخول عبر تويتش</h2>
+
+    <button class="twitch-btn" id="twitchLoginBtn">
+      تسجيل دخول بـ Twitch
+    </button>
+
+    <p class="small" id="msg"></p>
+  </div>
+
+  <script src="../ether.js"></script>
+</body>
+
+<body>
+
+<script>
+/* ✅ الإعدادات الصحيحة */
+const CLIENT_ID = "t0u3q65s187lx1y839yudlutyvkurc"; 
+const REDIRECT_URI = "https://test-291097v.netlify.app/login.html"; 
+const SCOPES = "chat:read chat:edit user:read:email";
+
+/* ✅ زر تسجيل الدخول */
+document.getElementById("twitchLoginBtn").onclick = () => {
+  const state = Math.random().toString(36).substring(2);
+
+  const authUrl =
+    "https://id.twitch.tv/oauth2/authorize" +
+    `?response_type=token` +
+    `&client_id=${encodeURIComponent(CLIENT_ID)}` +
+    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+    `&scope=${encodeURIComponent(SCOPES)}` +
+    `&state=${encodeURIComponent(state)}`;
+
+  localStorage.setItem("twitch_oauth_state", state);
+  window.location.href = authUrl;
+};
+
+/* ✅ قراءة التوكن بعد الرجوع */
+function parseHash(){
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  return Object.fromEntries(params.entries());
+}
+
+async function onReturnFromTwitch(){
+  if(!window.location.hash) return;
+
+  const data = parseHash();
+  const savedState = localStorage.getItem("twitch_oauth_state");
+
+  if(data.state !== savedState){
+    document.getElementById("msg").textContent = "فشل التحقق الأمني";
+    return;
+  }
+
+  if(!data.access_token){
+    document.getElementById("msg").textContent = "لم يصل التوكن";
+    return;
+  }
+
+  const accessToken = data.access_token;
+
+  /* ✅ جلب بيانات المستخدم بشكل صحيح */
+  const res = await fetch("https://api.twitch.tv/helix/users", {
+    headers:{
+      "Client-ID": CLIENT_ID,
+      "Authorization": "Bearer " + accessToken,
+    }
+  });
+
+  const json = await res.json();
+  const user = json.data?.[0];
+
+  if(!user){
+    document.getElementById("msg").textContent = "فشل جلب بيانات الحساب";
+    return;
+  }
+
+  /* ✅ الحفظ */
+  localStorage.setItem("twitch_access_token", accessToken);
+  localStorage.setItem("twitch_username", user.display_name);
+  localStorage.setItem("twitch_user_id", user.id);
+  localStorage.setItem("twitch_avatar", user.profile_image_url);
+
+  history.replaceState(null, "", REDIRECT_URI);
+
+  document.getElementById("msg").textContent = "✅ تم تسجيل الدخول بنجاح";
+  setTimeout(()=> location.href="index.html", 700);
+}
+
+onReturnFromTwitch();
+</script>
+
+</body>
+</html>
